@@ -154,6 +154,16 @@ const modelList = computed(() => {
   if (endpointType.value === 'ollama') {
     return ollamaModelList.value
   }
+  else if (endpointType.value === 'openai-compatible') {
+    const openaiCompatibleModel = userConfig.llm.openaiCompatible.model.get()
+    if (openaiCompatibleModel) {
+      return [{
+        name: openaiCompatibleModel,
+        model: openaiCompatibleModel,
+      }]
+    }
+    return []
+  }
   else {
     return SUPPORTED_MODELS.map((model) => ({
       name: model.name,
@@ -166,6 +176,7 @@ const updateModelList = async () => {
   if (endpointType.value === 'ollama') {
     await updateOllamaModelList()
   }
+  // For openai-compatible and web-llm, no need to update model list
 }
 
 defineExpose({
@@ -204,6 +215,13 @@ watch(modelList, (modelList) => {
   }
   const newSelectedModel = modelList.find((m) => m.model === selectedModel.value) ?? modelList[0] ?? undefined
   selectedModel.value = newSelectedModel.model
+})
+
+watch(endpointType, () => {
+  if (endpointType.value === 'openai-compatible') {
+    const openaiCompatibleModel = userConfig.llm.openaiCompatible.model.get()
+    selectedModel.value = openaiCompatibleModel
+  }
 })
 
 watch([baseUrl, endpointType], async () => {

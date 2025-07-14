@@ -74,18 +74,52 @@ export class ContextMenuManager {
     return storage.setItem(CONTEXT_MENU_STORAGE_KEY, [...this.currentMenuMap.entries()])
   }
 
-  private createMenuItem(params: Browser.contextMenus.CreateProperties) {
-    return new Promise<void>((resolve, reject) => {
-      browser.contextMenus.create(params, () => {
-        if (browser.runtime.lastError) {
-          log.error('Failed to create root context menu:', browser.runtime.lastError)
-          reject(browser.runtime.lastError)
+  private safeContextMenuOperation<T>(operation: () => T, operationName: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      try {
+        const result = operation()
+        resolve(result)
+      }
+      catch (error) {
+        if (error instanceof Error && error.message.includes('Extension context invalidated')) {
+          log.warn(`Extension context invalidated during ${operationName} - this is expected during development`)
+          resolve(undefined as T)
         }
         else {
-          resolve()
+          log.error(`Failed to ${operationName}:`, error)
+          reject(error)
         }
-      })
+      }
     })
+  }
+
+  private createMenuItem(params: Browser.contextMenus.CreateProperties) {
+    return this.safeContextMenuOperation(() => {
+      return new Promise<void>((resolve, reject) => {
+        browser.contextMenus.create(params, () => {
+          if (browser.runtime.lastError) {
+            const error = browser.runtime.lastError
+            if (error.message?.includes('Extension context invalidated')) {
+              log.warn('Extension context invalidated while creating context menu - this is expected during development')
+              resolve()
+            }
+            else {
+              log.error('Failed to create context menu:', error)
+              reject(error)
+            }
+          }
+          else {
+            resolve()
+          }
+        })
+      })
+    }, 'create context menu').then((result) => result || Promise.resolve())
+  }
+
+  private removeAllMenuItems() {
+    return this.safeContextMenuOperation(() => {
+      return browser.contextMenus.removeAll()
+    }, 'remove all context menus')
   }
 
   private async restoreCurrentMenuMap() {
@@ -109,7 +143,7 @@ export class ContextMenuManager {
     await this.saveCurrentMenuMap()
     try {
       log.debug('Reconstructing context menu', this.currentMenuMap)
-      await browser.contextMenus.removeAll()
+      await this.removeAllMenuItems()
       const firstLevelMenus = Array.from(this.currentMenuMap.values()).filter((item) => item.parentId === undefined)
       const reconstructMenuItem = async (parentId: string | undefined, items: ContextMenuMapItem[], titlePrefix?: string) => {
         for (const item of items) {

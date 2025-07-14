@@ -174,6 +174,69 @@ const streamObjectFromSchema = async <S extends SchemaName>(options: Pick<Genera
 }
 
 const generateObjectFromSchema = async <S extends SchemaName>(options: Pick<GenerateObjectOptions, 'prompt' | 'system' | 'messages'> & { schema: S }) => {
+  const userConfig = await getUserConfig()
+  const endpointType = userConfig.llm.endpointType.get()
+
+  // For OpenAI Compatible API, skip structured outputs and use regular text generation
+  if (endpointType === 'openai-compatible') {
+    const { generateText } = await import('ai')
+    const model = await getModel({ ...(await getModelUserConfig()) })
+
+    const s = selectSchema(options.schema)
+    const isEnum = s instanceof z.ZodEnum
+
+    let promptWithSchema: string
+    if (isEnum) {
+      const enumValues = (s as z.ZodEnum<[string, ...string[]]>)._def.values
+      promptWithSchema = `${options.prompt}\n\nPlease respond with one of these exact values: ${enumValues.join(', ')}`
+    }
+    else {
+      promptWithSchema = `${options.prompt}\n\nPlease respond with a valid JSON object that matches this schema. Only return the JSON object, no additional text.`
+    }
+
+    const result = await generateText({
+      model,
+      prompt: promptWithSchema,
+      system: options.system,
+      messages: options.messages,
+    })
+
+    try {
+      const parsed = JSON.parse(result.text)
+      return {
+        object: parsed,
+        finishReason: 'stop',
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+        warnings: undefined,
+        request: { body: '' },
+        response: { headers: {}, status: 200, statusText: 'OK' },
+        logprobs: undefined,
+        providerMetadata: undefined,
+        experimental_providerMetadata: undefined,
+        toJsonResponse: () => ({ object: parsed }),
+      } as unknown as GenerateObjectResult<z.infer<Schemas[S]>>
+    }
+    catch {
+      // If JSON parsing fails, return the text as-is for enum cases
+      if (isEnum) {
+        const trimmedText = result.text.trim()
+        return {
+          object: trimmedText,
+          finishReason: 'stop',
+          usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          warnings: undefined,
+          request: { body: '' },
+          response: { headers: {}, status: 200, statusText: 'OK' },
+          logprobs: undefined,
+          providerMetadata: undefined,
+          experimental_providerMetadata: undefined,
+          toJsonResponse: () => ({ object: trimmedText }),
+        } as unknown as GenerateObjectResult<z.infer<Schemas[S]>>
+      }
+      throw new Error('Failed to parse JSON response from OpenAI Compatible API')
+    }
+  }
+
   const s = selectSchema(options.schema)
   const isEnum = s instanceof z.ZodEnum
   let ret
@@ -424,6 +487,7 @@ async function isCurrentModelReady() {
     const endpointType = userConfig.llm.endpointType.get()
     const model = userConfig.llm.model.get()
     if (endpointType === 'ollama') return true
+    else if (endpointType === 'openai-compatible') return true
     else if (endpointType === 'web-llm') {
       return await hasWebLLMModelInCache(model as WebLLMSupportedModel)
     }
@@ -440,6 +504,9 @@ async function initCurrentModel() {
   const endpointType = userConfig.llm.endpointType.get()
   const model = userConfig.llm.model.get()
   if (endpointType === 'ollama') {
+    return false
+  }
+  else if (endpointType === 'openai-compatible') {
     return false
   }
   else if (endpointType === 'web-llm') {

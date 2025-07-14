@@ -126,15 +126,22 @@ export default defineBackground(() => {
       if (tab.id && tab.url) {
         const tabUrl = tab.url
         if (INVALID_URLS.some((regex) => regex.test(tabUrl))) continue
-        await browser.scripting.executeScript({
-          files: ['/content-scripts/content.js'],
-          target: { tabId: tab.id },
-          world: 'ISOLATED',
-        }).then(() => {
-          logger.info('Content script injected', { tabId: tab.id })
-        }).catch((error) => {
-          logger.error('Failed to inject content script', { tabId: tab.id, error })
-        })
+
+        try {
+          await browser.scripting.executeScript({
+            files: ['/content-scripts/content.js'],
+            target: { tabId: tab.id },
+            world: 'ISOLATED',
+          })
+          logger.info('Content script injected', { tabId: tab.id, url: tabUrl })
+        }
+        catch (error) {
+          logger.warn('Failed to inject content script', {
+            tabId: tab.id,
+            url: tabUrl,
+            error: error instanceof Error ? error.message : String(error),
+          })
+        }
       }
     }
   })

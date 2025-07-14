@@ -20,7 +20,8 @@ export async function getOpenAICompatibleClient() {
       if (typeof body !== 'string') return body
       const parsedBody = JSON.parse(body)
 
-      // Add any OpenAI Compatible specific transformations here
+      // OpenAI Compatible API doesn't support 'think' parameter, so we don't add it
+      // Just return the body as-is for OpenAI Compatible APIs
       return JSON.stringify(parsedBody)
     },
   })
@@ -42,7 +43,7 @@ export async function getOpenAICompatibleModel(options: {
   const openai = await getOpenAICompatibleClient()
 
   const model = openai(options.model, {
-    structuredOutputs: true,
+    structuredOutputs: false,
   })
 
   // Apply reasoning middleware if needed

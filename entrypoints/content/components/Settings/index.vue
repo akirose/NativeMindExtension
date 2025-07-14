@@ -528,7 +528,9 @@ const onClickTitle = () => {
 const { start: startCheckConnection, stop: stopCheckConnection, remaining: checkSignal } = useCountdown(600, { interval: 2000 })
 
 watch(checkSignal, (val) => {
-  if (val) reScanOllama()
+  if (val && endpointType.value === 'ollama') {
+    reScanOllama()
+  }
 })
 
 const onClickInstall = () => {
@@ -548,7 +550,6 @@ const reScanOllama = async () => {
   const success = await ollamaStatusStore.updateConnectionStatus()
   log.info('Ollama connection test result:', success)
   if (success) {
-    endpointType.value = 'ollama'
     stopCheckConnection()
   }
 }
