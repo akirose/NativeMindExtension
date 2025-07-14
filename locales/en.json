@@ -19,6 +19,16 @@
       "unconnected": "Unconnected",
       "connection_error": "Connection Error"
     },
+    "openai_compatible": {
+      "title": "OpenAI Compatible API",
+      "base_url": "API Base URL",
+      "api_key": "API Key",
+      "model": "Model",
+      "connected": "Connected",
+      "not_connected": "Not Connected",
+      "connection_test_success": "Connection test successful",
+      "connection_test_failed": "Connection test failed"
+    },
     "choose_model": "Choose Model",
     "download": "Download",
     "prompts": {

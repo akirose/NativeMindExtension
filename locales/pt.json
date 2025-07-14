@@ -96,6 +96,16 @@
       "setup": "Configurar",
       "unconnected": "Desconectado"
     },
+    "openai_compatible": {
+      "title": "API Compatível com OpenAI",
+      "base_url": "URL Base da API",
+      "api_key": "Chave da API",
+      "model": "Modelo",
+      "connected": "Conectado",
+      "not_connected": "Não Conectado",
+      "connection_test_success": "Teste de conexão bem-sucedido",
+      "connection_test_failed": "Teste de conexão falhou"
+    },
     "prompts": {
       "chat_system_prompt": "Prompt de sistema do chat",
       "title": "Prompts",

@@ -19,6 +19,16 @@
       "server_address": "服务器地址",
       "unconnected": "未连接"
     },
+    "openai_compatible": {
+      "title": "OpenAI兼容API",
+      "base_url": "API基础URL",
+      "api_key": "API密钥",
+      "model": "模型",
+      "connected": "已连接",
+      "not_connected": "未连接",
+      "connection_test_success": "连接测试成功",
+      "connection_test_failed": "连接测试失败"
+    },
     "choose_model": "选择模型",
     "download": "下载",
     "prompts": {

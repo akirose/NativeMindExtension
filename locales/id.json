@@ -96,6 +96,16 @@
       "setup": "Pengaturan",
       "unconnected": "Tidak terhubung"
     },
+    "openai_compatible": {
+      "title": "API Kompatibel OpenAI",
+      "base_url": "URL Dasar API",
+      "api_key": "Kunci API",
+      "model": "Model",
+      "connected": "Terhubung",
+      "not_connected": "Tidak Terhubung",
+      "connection_test_success": "Tes koneksi berhasil",
+      "connection_test_failed": "Tes koneksi gagal"
+    },
     "prompts": {
       "chat_system_prompt": "Prompt sistem obrolan",
       "title": "Prompt",

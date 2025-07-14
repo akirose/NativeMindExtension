@@ -96,6 +96,16 @@
       "setup": "Cài đặt",
       "unconnected": "Không kết nối"
     },
+    "openai_compatible": {
+      "title": "API Tương thích OpenAI",
+      "base_url": "URL Cơ sở API",
+      "api_key": "Khóa API",
+      "model": "Mô hình",
+      "connected": "Đã kết nối",
+      "not_connected": "Chưa kết nối",
+      "connection_test_success": "Kiểm tra kết nối thành công",
+      "connection_test_failed": "Kiểm tra kết nối thất bại"
+    },
     "prompts": {
       "chat_system_prompt": "Nhắc hệ thống trò chuyện",
       "title": "Nhắc nhở",

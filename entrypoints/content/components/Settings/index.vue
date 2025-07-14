@@ -60,25 +60,42 @@
             </span>
           </Section>
           <Section :title="t('settings.provider.title')">
-            <Button
-              variant="secondary"
-              :hoverStyle="false"
-              class="flex justify-between items-center cursor-auto text-[13px] font-medium py-0 px-[10px] h-8 w-full bg-[#FAFAFA]"
-            >
+            <div class="flex flex-col gap-2">
+              <Selector
+                v-model="endpointType"
+                :options="[
+                  { id: 'web-llm', label: 'WebLLM', value: 'web-llm' },
+                  { id: 'ollama', label: 'Ollama', value: 'ollama' },
+                  { id: 'openai-compatible', label: 'OpenAI Compatible API', value: 'openai-compatible' }
+                ]"
+                dropdownClass="text-xs text-black w-64"
+                dropdownAlign="left"
+              />
               <div
-                class="flex items-center gap-2"
+                v-if="endpointType === 'ollama'"
+                class="flex items-center gap-2 mt-1"
               >
                 <img
                   :src="IconOllama"
                   class="w-4 h-4"
                 >
-                <span>Ollama</span>
+                <span class="text-xs">Ollama</span>
                 <StatusBadge
                   :status="connectionStatus === 'connected' ? 'success' : 'warning'"
                   :text="connectionStatus === 'connected' ? t('settings.ollama.connected') : t('settings.ollama.unconnected')"
                 />
               </div>
-            </Button>
+              <div
+                v-if="endpointType === 'openai-compatible'"
+                class="flex items-center gap-2 mt-1"
+              >
+                <span class="text-xs">{{ t('settings.openai_compatible.title') }}</span>
+                <StatusBadge
+                  :status="openaiCompatibleConnectionStatus === 'connected' ? 'success' : 'warning'"
+                  :text="openaiCompatibleConnectionStatus === 'connected' ? t('settings.openai_compatible.connected') : t('settings.openai_compatible.not_connected')"
+                />
+              </div>
+            </div>
           </Section>
           <Section>
             <div class="flex flex-col gap-4 items-start">
@@ -124,6 +141,59 @@
                   </div>
                 </Section>
               </ScrollTarget>
+              <div
+                v-if="endpointType === 'openai-compatible'"
+                class="w-full flex flex-col gap-4"
+              >
+                <Section
+                  :title="t('settings.openai_compatible.base_url')"
+                  class="w-full"
+                >
+                  <div class="flex gap-3 items-stretch">
+                    <Input
+                      v-model="openaiCompatibleBaseUrl"
+                      placeholder="https://api.openai.com/v1"
+                      class="rounded-md py-2 px-4 grow"
+                    />
+                  </div>
+                </Section>
+                <Section
+                  :title="t('settings.openai_compatible.api_key')"
+                  class="w-full"
+                >
+                  <div class="flex gap-3 items-stretch">
+                    <Input
+                      v-model="openaiCompatibleApiKey"
+                      type="password"
+                      placeholder="sk-..."
+                      class="rounded-md py-2 px-4 grow"
+                    />
+                  </div>
+                </Section>
+                <Section
+                  :title="t('settings.openai_compatible.model')"
+                  class="w-full"
+                >
+                  <div class="flex gap-3 items-stretch">
+                    <Input
+                      v-model="openaiCompatibleModel"
+                      placeholder="gpt-3.5-turbo"
+                      class="rounded-md py-2 px-4 grow"
+                    />
+                    <Button
+                      variant="primary"
+                      class="px-2 py-1"
+                      @click="testOpenAICompatibleConnectionHandler"
+                    >
+                      <Loading
+                        v-if="openaiCompatibleLoading"
+                        :size="16"
+                      />
+                      <span v-else>{{ t('settings.test') }}</span>
+                    </Button>
+                  </div>
+                </Section>
+              </div>
               <div v-if="connectionStatus !== 'connected'">
                 <Text
                   color="secondary"
@@ -325,7 +395,6 @@ import { useCountdown } from '@vueuse/core'
 import { onMounted, ref, toRef, watch } from 'vue'
 
 import IconClose from '@/assets/icons/close.svg?component'
-// import IconOllamaComponent from '@/assets/icons/logo-ollama.svg?component'
 import IconOllama from '@/assets/icons/ollama.png'
 import Input from '@/components/Input.vue'
 import Loading from '@/components/Loading.vue'
@@ -343,6 +412,7 @@ import UILanguageSelector from '@/components/UILanguageSelector.vue'
 import { OLLAMA_HOMEPAGE_URL, OLLAMA_TUTORIAL_URL } from '@/utils/constants'
 import { useI18n } from '@/utils/i18n/index'
 import { SUPPORTED_LANGUAGES } from '@/utils/language/detect'
+import { testOpenAICompatibleConnection } from '@/utils/llm/openai-compatible'
 import logger from '@/utils/logger'
 import { SettingsScrollTarget } from '@/utils/scroll-targets'
 import { DEFAULT_CHAT_SYSTEM_PROMPT, DEFAULT_TRANSLATOR_SYSTEM_PROMPT, getUserConfig } from '@/utils/user-config'
@@ -375,6 +445,13 @@ const baseUrl = userConfig.llm.baseUrl.toRef()
 const targetLocale = userConfig.translation.targetLocale.toRef()
 const endpointType = userConfig.llm.endpointType.toRef()
 const loading = ref(false)
+
+// OpenAI Compatible settings
+const openaiCompatibleBaseUrl = userConfig.llm.openaiCompatible.baseUrl.toRef()
+const openaiCompatibleApiKey = userConfig.llm.openaiCompatible.apiKey.toRef()
+const openaiCompatibleModel = userConfig.llm.openaiCompatible.model.toRef()
+const openaiCompatibleLoading = ref(false)
+const openaiCompatibleConnectionStatus = ref<'connected' | 'disconnected'>('disconnected')
 const modelSelectorRef = ref<InstanceType<typeof ModelSelector> | null>(null)
 const isShowDownloadWebLLMModal = ref(false)
 const connectionStatus = toRef(ollamaStatusStore, 'connectionStatus')
@@ -410,6 +487,28 @@ const testConnection = async () => {
     await ollamaStatusStore.updateModelList()
   }
   return success
+}
+
+const testOpenAICompatibleConnectionHandler = async () => {
+  openaiCompatibleLoading.value = true
+  try {
+    const result = await testOpenAICompatibleConnection()
+    if (result.success) {
+      openaiCompatibleConnectionStatus.value = 'connected'
+      log.info('OpenAI Compatible API connection test successful')
+    }
+    else {
+      openaiCompatibleConnectionStatus.value = 'disconnected'
+      log.error('OpenAI Compatible API connection test failed:', result.error)
+    }
+  }
+  catch (error) {
+    openaiCompatibleConnectionStatus.value = 'disconnected'
+    log.error('OpenAI Compatible API connection test error:', error)
+  }
+  finally {
+    openaiCompatibleLoading.value = false
+  }
 }
 
 let clickCount = 0

@@ -96,6 +96,16 @@
       "setup": "セットアップ",
       "unconnected": "未接続"
     },
+    "openai_compatible": {
+      "title": "OpenAI互換API",
+      "base_url": "APIベースURL",
+      "api_key": "APIキー",
+      "model": "モデル",
+      "connected": "接続済み",
+      "not_connected": "未接続",
+      "connection_test_success": "接続テスト成功",
+      "connection_test_failed": "接続テスト失敗"
+    },
     "prompts": {
       "chat_system_prompt": "チャットシステムプロンプト",
       "title": "プロンプト",

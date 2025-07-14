@@ -96,6 +96,16 @@
       "setup": "ตั้งค่า",
       "unconnected": "ยังไม่ได้เชื่อมต่อ"
     },
+    "openai_compatible": {
+      "title": "API ที่เข้ากันได้กับ OpenAI",
+      "base_url": "URL ฐานของ API",
+      "api_key": "คีย์ API",
+      "model": "โมเดล",
+      "connected": "เชื่อมต่อแล้ว",
+      "not_connected": "ไม่ได้เชื่อมต่อ",
+      "connection_test_success": "การทดสอบการเชื่อมต่อสำเร็จ",
+      "connection_test_failed": "การทดสอบการเชื่อมต่อล้มเหลว"
+    },
     "prompts": {
       "chat_system_prompt": "ระบบแชท",
       "title": "แจ้ง",

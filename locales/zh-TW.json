@@ -96,6 +96,16 @@
       "setup": "設定",
       "unconnected": "未連線"
     },
+    "openai_compatible": {
+      "title": "OpenAI 相容 API",
+      "base_url": "API 基礎 URL",
+      "api_key": "API 金鑰",
+      "model": "模型",
+      "connected": "已連線",
+      "not_connected": "未連線",
+      "connection_test_success": "連線測試成功",
+      "connection_test_failed": "連線測試失敗"
+    },
     "prompts": {
       "chat_system_prompt": "聊天系統提示詞",
       "title": "提示詞",

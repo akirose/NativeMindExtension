@@ -5,6 +5,7 @@ import { getUserConfig } from '@/utils/user-config'
 
 import { ModelNotFoundError } from '../error'
 import { makeCustomFetch } from '../fetch'
+import { getOpenAICompatibleModel } from './openai-compatible'
 import { WebLLMChatLanguageModel } from './providers/web-llm/openai-compatible-chat-language-model'
 import { getWebLLMEngine, WebLLMSupportedModel } from './web-llm'
 
@@ -16,11 +17,25 @@ const reasoningMiddleware = extractReasoningMiddleware({
 
 export async function getModelUserConfig() {
   const userConfig = await getUserConfig()
-  const model = userConfig.llm.model.get()
-  const baseUrl = userConfig.llm.baseUrl.get()
-  const apiKey = userConfig.llm.apiKey.get()
+  const endpointType = userConfig.llm.endpointType.get()
   const numCtx = userConfig.llm.numCtx.get()
   const reasoning = userConfig.llm.reasoning.get()
+
+  let model: string | undefined
+  let baseUrl: string
+  let apiKey: string
+
+  if (endpointType === 'openai-compatible') {
+    model = userConfig.llm.openaiCompatible.model.get()
+    baseUrl = userConfig.llm.openaiCompatible.baseUrl.get()
+    apiKey = userConfig.llm.openaiCompatible.apiKey.get()
+  }
+  else {
+    model = userConfig.llm.model.get()
+    baseUrl = userConfig.llm.baseUrl.get()
+    apiKey = userConfig.llm.apiKey.get()
+  }
+
   if (!model) {
     throw new ModelNotFoundError()
   }
@@ -83,6 +98,13 @@ export async function getModel(options: {
       { supportsStructuredOutputs: true, provider: 'web-llm', defaultObjectGenerationMode: 'json' },
     )
   }
+  else if (endpointType === 'openai-compatible') {
+    model = await getOpenAICompatibleModel({
+      model: options.model,
+      numCtx: options.numCtx,
+      reasoning: options.reasoning,
+    })
+  }
   else {
     throw new Error('Unsupported endpoint type ' + endpointType)
   }
@@ -92,7 +114,7 @@ export async function getModel(options: {
   })
 }
 
-export type LLMEndpointType = 'ollama' | 'web-llm'
+export type LLMEndpointType = 'ollama' | 'web-llm' | 'openai-compatible'
 
 export function parseErrorMessageFromChunk(error: unknown): string | null {
   if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {

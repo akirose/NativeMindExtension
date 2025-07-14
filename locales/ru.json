@@ -96,6 +96,16 @@
       "setup": "Настройка",
       "unconnected": "Не подключено"
     },
+    "openai_compatible": {
+      "title": "API Совместимый с OpenAI",
+      "base_url": "Базовый URL API",
+      "api_key": "Ключ API",
+      "model": "Модель",
+      "connected": "Подключено",
+      "not_connected": "Не Подключено",
+      "connection_test_success": "Тест соединения успешен",
+      "connection_test_failed": "Тест соединения не удался"
+    },
     "prompts": {
       "chat_system_prompt": "Системная подсказка для чата",
       "title": "Подсказки",

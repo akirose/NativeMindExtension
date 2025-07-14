@@ -122,6 +122,11 @@ async function _getUserConfig() {
       reasoning: await new Config('llm.reasoning').default(true).build(),
       chatSystemPrompt: await new Config('llm.chatSystemPrompt').default(DEFAULT_CHAT_SYSTEM_PROMPT).build(),
       summarizeSystemPrompt: await new Config('llm.summarizeSystemPrompt').default(DEFAULT_CHAT_SYSTEM_PROMPT).build(),
+      openaiCompatible: {
+        baseUrl: await new Config('llm.openaiCompatible.baseUrl').default('https://api.openai.com/v1').build(),
+        apiKey: await new Config('llm.openaiCompatible.apiKey').default('').build(),
+        model: await new Config('llm.openaiCompatible.model').default('gpt-3.5-turbo').build(),
+      },
     },
     chromeAI: {
       polyfill: {
